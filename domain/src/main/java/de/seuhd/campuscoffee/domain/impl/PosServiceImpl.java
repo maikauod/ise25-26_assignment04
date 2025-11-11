@@ -72,7 +72,6 @@ public class PosServiceImpl implements PosService {
         OsmNode osmNode = osmDataService.fetchNode(nodeId);
 
         // Convert OSM node to POS domain object and upsert it
-        // TODO: Implement the actual conversion (the response is currently hard-coded).
         Pos savedPos = upsert(convertOsmNodeToPos(osmNode));
         log.info("Successfully imported POS '{}' from OSM node {}", savedPos.name(), nodeId);
 
@@ -81,23 +80,30 @@ public class PosServiceImpl implements PosService {
 
     /**
      * Converts an OSM node to a POS domain object.
-     * Note: This is a stub implementation and should be replaced with real mapping logic.
      */
     private @NonNull Pos convertOsmNodeToPos(@NonNull OsmNode osmNode) {
-        if (osmNode.nodeId().equals(5589879349L)) {
-            return Pos.builder()
-                    .name("Rada Coffee & Rösterei")
-                    .description("Caffé und Rösterei")
-                    .type(PosType.CAFE)
-                    .campus(CampusType.ALTSTADT)
-                    .street("Untere Straße")
-                    .houseNumber("21")
-                    .postalCode(69117)
-                    .city("Heidelberg")
-                    .build();
-        } else {
+        // Validate required fields for creating a POS
+        if (osmNode.name() == null || osmNode.name().isBlank()
+                || osmNode.street() == null || osmNode.street().isBlank()
+                || osmNode.houseNumber() == null || osmNode.houseNumber().isBlank()
+                || osmNode.city() == null || osmNode.city().isBlank()
+                || osmNode.postalCode() == null
+                || osmNode.type() == null
+                || osmNode.campus() == null) {
             throw new OsmNodeMissingFieldsException(osmNode.nodeId());
         }
+
+        // Map OsmNode -> Pos using domain types
+        return Pos.builder()
+                .name(osmNode.name())
+                .description(null)
+                .type(osmNode.type())
+                .campus(osmNode.campus())
+                .street(osmNode.street())
+                .houseNumber(osmNode.houseNumber())
+                .postalCode(osmNode.postalCode())
+                .city(osmNode.city())
+                .build();
     }
 
     /**
